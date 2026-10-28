@@ -71,12 +71,32 @@ router.get("/:id", async (req, res) => {
   res.json(expense);
 });
 
+// PUT request for specific id endpoint (updating expenses)
+router.put("/:id", async (req, res) => {
+    // do stuff
+});
 
+// DELETE request for id endpoint (for removing)
+router.delete("/:id", async (req, res) => {
 
+    const { id } = req.params; // the id itself will tell what to remove
 
+    if (!ObjectId.isValid(id)) {
+        return res.status(400).json({ error: "Invalid id" });
+    }
 
+    // deleteOne() removes the first expense that matches the _id
+    // stores result in the result variable
+    const result = await db.collection("expenses").deleteOne({ _id: new ObjectId(id) });
+    
+    // deletedCount is how many expenses were removed 1 if id existed, 0 is nothing
+    // if result is 0, there was no id
+    if (result.deletedCount === 0) { // deletedCount from MongoDB a property on the object that deleteOne returns
+        return res.status(404).json({ error: "Expense not found" }); // return error if _id not found
+    } 
 
-
-
+    // sends JSON with a message that the specific id was deleted (expense)
+    res.json({ message: "Expense deleted", id });
+});
 
 export default router; // allows export to other files
