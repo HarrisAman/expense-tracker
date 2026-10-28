@@ -2,6 +2,7 @@ import "dotenv/config"; // reads server/.env file and copies each KEY=value line
 import {connectToMongoDB, disconnectFromMongoDB} from './db.js'; // imports from db.js file
 import express from "express"; // imports express which allows me to receive requests and send responses to the client (browser)
 import cors from "cors"; // imports cors which lets my browser reads responses from the server (fetch would not work - browser security feature) 
+import expenseRoutes from "./routes.js"; // imports expenseRoutes from routes.js file, which contains the routes for the expenses API
 
 // creating app the central object all middleware, routes, and the calls attach to it (const because can not be changed)
 const app = express(); // (express() is a function) creates an instance of express app, which is used to handle requests and responses. All stored in app variable
@@ -18,6 +19,8 @@ app.use(express.json());
 app.get("/api/health", (req, res) => { // GET request to /api/health endpoint. Callback function takes two parameters: req (request object) and res (response object)
   res.json({status: "ok"}); // sends a JSON response with a status property set to "ok". This is often used as a health check endpoint to verify that the server is running and responsive.
 });
+
+app.use("/api/expenses", expenseRoutes); // attaches the expenseRoutes router to the main app at the "/api/expenses" path
 
 async function start() {
   try {
