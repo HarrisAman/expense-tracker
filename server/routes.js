@@ -1,5 +1,6 @@
 import { Router } from "express"; //imports Router class from express package, it holds routes (let me keep expense routes in this file as opposed to index.js file)
 import { db } from "./db.js"; // imports db variable from db.js file, need the database to save data
+import { ObjectId } from "mongodb"; // imports ObjectId class from mongodb package, used to convert string to ObjectId for MongoDB queries
 
 const router = Router(); // create router variable to hold the instance of Router class and attach handlers
 
@@ -24,7 +25,6 @@ router.post("/", async (req, res) => {
         return res.status(400).json({ error: "Amount is required and must be a positive number." });
     }
 
-    // 
     const doc = { title: title.trim(), amount };  // create new object doc with title and amount fields (allows me to build the doc myself)
     // db.collection("expenses") accesses the expenses collection in the database, 
     // and .insertOne(doc) inserts the doc object into the collection
@@ -46,7 +46,30 @@ router.get("/", async (req, res) => { // all the same .get() is handler for read
   res.json(expenses);
 });
 
+// GET request for a specific id endpoint
+// id is now the placeholder for the route parameter
+// which is a variable part of the URL that can be accessed using req.params object
+router.get("/:id", async (req, res) => { 
 
+  const { id } = req.params; // object holding the route parameters (req.params = id)
+  // if NOT ObjectId.isValid(id) - checks if the id is a valid ObjectId format
+  // if not return 400 error with message
+  if (!ObjectId.isValid(id)) { // ObjectId is a 24 character hex string (key id) - isValid() is a method that checks if a value could be turned into an ObjectId
+    return res.status(400).json({ error: "Invalid id" });
+  }
+
+  // findOne() method searches for a single document in the expenses collection that matches the query { _id: new ObjectId(id) }
+  // points to same expenses collection, waits for database response and stores in expense variable
+  const expense = await db.collection("expenses").findOne({ _id: new ObjectId(id) }); // converts URL string into an ObjectId object so MongoDB can read it
+
+  // if NO expense (nothing matches) - return 404 error (not found) - meaning no expense has that _id
+  if (!expense) {
+    return res.status(404).json({ error: "Expense not found" });
+  }
+
+  // send the response result as JSON and _id is converted to string
+  res.json(expense);
+});
 
 
 
