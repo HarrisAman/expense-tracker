@@ -22,14 +22,16 @@ app.get("/api/health", (req, res) => { // GET request to /api/health endpoint. C
 
 app.use("/api/expenses", expenseRoutes); // attaches the expenseRoutes router to the main app at the "/api/expenses" path
 
+// async function named start - to start connection
 async function start() {
-  try {
-    await connectToMongoDB();
-    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-  } catch (err) {
+  try {                       // try/catch block to attempt to connect to database
+    await connectToMongoDB(); // connects to database - returns Promise as it takes time
+    // .listen() starts my server and opens a PORT to accept HTTP requests - if successful prints message
+    app.listen(PORT, () => console.log(`Server running on port ${PORT}`)); //
+  } catch (err) {             // if cant connect throws error and prints error message
     console.error("Failed to start server:", err.message);
-    process.exit(1);
+    process.exit(1); // terminates node if fails (0 means success, anything else is failure)
   }
 }
 
-start();
+start(); // calling the function to start connection
