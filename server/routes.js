@@ -37,4 +37,23 @@ router.post("/", async (req, res) => {
     res.status(201).json({ _id: result.insertedId, ...doc }); // NEED THE _id to edit or delete expense.
 });
 
+router.get("/", async (req, res) => { // all the same .get() is handler for reading data, wont use req because not needed (for syntax)
+  // .find() builds query to retrieve all documents in the expenses collection
+  // and .toArray() converts the result to an array of documents
+  // stores in expenses variable and awaits until the query is complete
+  const expenses = await db.collection("expenses").find().toArray(); 
+  // converts the result to an array of documents and sends it as a JSON response to the client (browser)
+  res.json(expenses);
+});
+
+
+
+
+
+
+
+
+
+
+
 export default router; // allows export to other files
