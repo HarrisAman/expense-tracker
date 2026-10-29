@@ -73,7 +73,47 @@ router.get("/:id", async (req, res) => {
 
 // PUT request for specific id endpoint (updating expenses)
 router.put("/:id", async (req, res) => {
-    // do stuff
+    // do stuff can use .updateOne()
+    const { id } = req.params;
+    const { title, amount } = req.body;
+
+    if (!ObjectId.isValid(id)) { // ObjectId is a 24 character hex string (key id) - isValid() is a method that checks if a value could be turned into an ObjectId
+        return res.status(400).json({ error: "Invalid id" });
+    }
+
+    const updates = {};
+
+    if (title !== undefined) {
+        if (typeof title !== "string" || title.trim() === "") {
+            return res.status(400).json({ error: "Title must be non-empty text" });
+        }
+        updates.title = title.trim();
+    }
+
+    if (amount !== undefined) {
+        if (typeof amount !== "number" || Number.isNaN(amount)) {
+            return res.status(400).json({ error: "Amount must be a number" });
+        }
+        updates.amount = amount;
+    }
+
+    if (Object.keys(updates).length === 0) {
+        return res.status(400).json({ error: "Nothing to update" });
+    }
+
+    if (Object.keys(updates).length === 0) {
+        return res.status(400).json({ error: "Nothing to update" });
+    }
+
+    const result = await db.collection("expenses").updateOne({ _id: new ObjectId(id) }, { $set: updates });
+
+    if (result.matchedCount === 0) {
+        return res.status(404).json({ error: "Expense not found" });
+    }
+
+    const updated = await db.collection("expenses").findOne({ _id: new ObjectId(id) });
+    
+    res.json(updated);
 });
 
 // DELETE request for id endpoint (for removing)
