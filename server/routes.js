@@ -24,8 +24,8 @@ router.post("/", async (req, res) => {
     if (typeof amount !== "number" || amount <= 0) {
         return res.status(400).json({ error: "Amount is required and must be a positive number." });
     }
-
-    const doc = { title: title.trim(), amount };  // create new object doc with title and amount fields (allows me to build the doc myself)
+    const now = new Date();
+    const doc = { title: title.trim(), amount, createdAt: now, updatedAt: now, isActive: 1 };  // create new object doc with title and amount fields (allows me to build the doc myself)
     // db.collection("expenses") accesses the expenses collection in the database, 
     // and .insertOne(doc) inserts the doc object into the collection
     // it returns a Promise that resolves and awaits until confirmed - all stored in result variable
@@ -41,7 +41,7 @@ router.get("/", async (req, res) => { // all the same .get() is handler for read
   // .find() builds query to retrieve all documents in the expenses collection
   // and .toArray() converts the result to an array of documents
   // stores in expenses variable and awaits until the query is complete
-  const expenses = await db.collection("expenses").find().toArray(); 
+  const expenses = await db.collection("expenses").find({ isActive: 1 }).sort({ _id: -1 }).toArray(); 
   // converts the result to an array of documents and sends it as a JSON response to the client (browser)
   res.json(expenses);
 });
@@ -75,7 +75,7 @@ router.get("/:id", async (req, res) => {
 router.put("/:id", async (req, res) => {
     // do stuff can use .updateOne()
     const { id } = req.params;
-    const { title, amount } = req.body;
+    const { title, amount, isActive } = req.body;
 
     if (!ObjectId.isValid(id)) { // ObjectId is a 24 character hex string (key id) - isValid() is a method that checks if a value could be turned into an ObjectId
         return res.status(400).json({ error: "Invalid id" });
@@ -96,23 +96,29 @@ router.put("/:id", async (req, res) => {
         }
         updates.amount = amount;
     }
-
-    if (Object.keys(updates).length === 0) {
-        return res.status(400).json({ error: "Nothing to update" });
+    if (isActive !== undefined) {
+        if (isActive !== 0 && isActive !== 1) {
+            return res.status(400).json({ error: "isActive must be 0 or 1" });
+        }
+        updates.isActive = isActive;
     }
 
     if (Object.keys(updates).length === 0) {
         return res.status(400).json({ error: "Nothing to update" });
     }
 
-    const result = await db.collection("expenses").updateOne({ _id: new ObjectId(id) }, { $set: updates });
+    if (Object.keys(updates).length === 0) {
+        return res.status(400).json({ error: "Nothing to update" });
+    }
+
+    const result = await db.collection("expenses").updateOne({ _id: new ObjectId(id) }, { $set: { ...updates, updatedAt: new Date() }});
 
     if (result.matchedCount === 0) {
         return res.status(404).json({ error: "Expense not found" });
     }
 
     const updated = await db.collection("expenses").findOne({ _id: new ObjectId(id) });
-    
+
     res.json(updated);
 });
 
