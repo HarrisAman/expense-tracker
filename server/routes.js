@@ -24,8 +24,13 @@ router.post("/", async (req, res) => {
     if (typeof amount !== "number" || amount <= 0) {
         return res.status(400).json({ error: "Amount is required and must be a positive number." });
     }
+
+    // new Date() creates a new Date object representing the current date and time the line runs - into variable now
     const now = new Date();
-    const doc = { title: title.trim(), amount, createdAt: now, updatedAt: now, isActive: 1 };  // create new object doc with title and amount fields (allows me to build the doc myself)
+
+     // create new object doc with relevant fields (allows me to build the doc myself)
+    const doc = { title: title.trim(), amount, createdAt: now, updatedAt: now, isActive: 1 };
+
     // db.collection("expenses") accesses the expenses collection in the database, 
     // and .insertOne(doc) inserts the doc object into the collection
     // it returns a Promise that resolves and awaits until confirmed - all stored in result variable
@@ -38,12 +43,13 @@ router.post("/", async (req, res) => {
 });
 
 router.get("/", async (req, res) => { // all the same .get() is handler for reading data, wont use req because not needed (for syntax)
-  // .find() builds query to retrieve all documents in the expenses collection
-  // and .toArray() converts the result to an array of documents
-  // stores in expenses variable and awaits until the query is complete
-  const expenses = await db.collection("expenses").find({ isActive: 1 }).sort({ _id: -1 }).toArray(); 
-  // converts the result to an array of documents and sends it as a JSON response to the client (browser)
-  res.json(expenses);
+    // .find() builds query with isActive: 1 filter to only return documents where isActive is 1 (true) - meaning not deleted
+    // .sort() sorts the results in descending order (-1) based on the _id field (newest first - timestamp)
+    // and .toArray() converts the result to an array of documents
+    // stores in expenses variable and awaits until the query is complete
+    const expenses = await db.collection("expenses").find({ isActive: 1 }).sort({ _id: -1 }).toArray(); 
+    // converts the result to an array of documents and sends it as a JSON response to the client (browser)
+    res.json(expenses);
 });
 
 // GET request for a specific id endpoint
@@ -51,12 +57,12 @@ router.get("/", async (req, res) => { // all the same .get() is handler for read
 // which is a variable part of the URL that can be accessed using req.params object
 router.get("/:id", async (req, res) => { 
 
-  const { id } = req.params; // object holding the route parameters (req.params = id)
-  // if NOT ObjectId.isValid(id) - checks if the id is a valid ObjectId format
-  // if not return 400 error with message
-  if (!ObjectId.isValid(id)) { // ObjectId is a 24 character hex string (key id) - isValid() is a method that checks if a value could be turned into an ObjectId
-    return res.status(400).json({ error: "Invalid id" });
-  }
+    const { id } = req.params; // object holding the route parameters (req.params = id)
+    // if NOT ObjectId.isValid(id) - checks if the id is a valid ObjectId format
+    // if not return 400 error with message
+    if (!ObjectId.isValid(id)) { // ObjectId is a 24 character hex string (key id) - isValid() is a method that checks if a value could be turned into an ObjectId
+        return res.status(400).json({ error: "Invalid id" });
+    }
 
   // findOne() method searches for a single document in the expenses collection that matches the query { _id: new ObjectId(id) }
   // points to same expenses collection, waits for database response and stores in expense variable
@@ -73,53 +79,62 @@ router.get("/:id", async (req, res) => {
 
 // PUT request for specific id endpoint (updating expenses)
 router.put("/:id", async (req, res) => {
-    // do stuff can use .updateOne()
-    const { id } = req.params;
-    const { title, amount, isActive } = req.body;
+    
+    const { id } = req.params; // req.params says which expense to update (the id itself)
+    const { title, amount, isActive } = req.body; // req.body says to change the title, amount, or isActive (any combination)
 
     if (!ObjectId.isValid(id)) { // ObjectId is a 24 character hex string (key id) - isValid() is a method that checks if a value could be turned into an ObjectId
         return res.status(400).json({ error: "Invalid id" });
     }
 
+    // create an empty object to hold the updates
     const updates = {};
 
-    if (title !== undefined) {
-        if (typeof title !== "string" || title.trim() === "") {
+    
+    if (title !== undefined) { // check if title is provided in the request body and validate them
+        if (typeof title !== "string" || title.trim() === "") { // if title is NOT a string OR IS an empty string, return errors
             return res.status(400).json({ error: "Title must be non-empty text" });
         }
-        updates.title = title.trim();
+        updates.title = title.trim(); // adds the title property to the updates object after trimming
     }
 
-    if (amount !== undefined) {
-        if (typeof amount !== "number" || Number.isNaN(amount)) {
+    if (amount !== undefined) { // check if amount is provided in the request body and validate it
+        if (typeof amount !== "number" || Number.isNaN(amount)) { // if amount IS NOT a number OR IS NaN (not a number), return errors
             return res.status(400).json({ error: "Amount must be a number" });
         }
-        updates.amount = amount;
+        updates.amount = amount; // adds the number property to the updates object
     }
-    if (isActive !== undefined) {
-        if (isActive !== 0 && isActive !== 1) {
+    // 0 is FALSE and 1 is TRUE, so if isActive is provided, check if it is either 0 or 1
+    if (isActive !== undefined) { // check if isActive is provided in the request body and validate it
+        if (isActive !== 0 && isActive !== 1) { // if isActive is NOT 0 AND NOT 1, return errors
             return res.status(400).json({ error: "isActive must be 0 or 1" });
         }
-        updates.isActive = isActive;
+        updates.isActive = isActive; // adds the isActive property to the updates object
     }
-
-    if (Object.keys(updates).length === 0) {
+    // if updates object is empty (no valid fields to update), return 400 error with message
+    // .keys() returns an array of the object's property names
+    if (Object.keys(updates).length === 0) { // .length checks how many properties are in the updates object - if 0, then nothing to update
         return res.status(400).json({ error: "Nothing to update" });
     }
 
-    if (Object.keys(updates).length === 0) {
-        return res.status(400).json({ error: "Nothing to update" });
-    }
-
+    // updateOne() method updates a single document in the expenses collection that matches the query { _id: new ObjectId(id) }
+    // takes 2 arguments: the filter (query) and the update operation (updates object)
+    // $set operator is used to specify the fields to update and their new values (updates object)
+    // updatedAt field is set to the current date and time using new Date() - a fresh timestamp
+    // stores result in result variable and awaits until the update is complete
     const result = await db.collection("expenses").updateOne({ _id: new ObjectId(id) }, { $set: { ...updates, updatedAt: new Date() }});
 
+    // matchedCount is how many documents matched the filter - with updatedOne its 0 or 1
+    // if result is 0, there was no id to be found, return 404 error with message
     if (result.matchedCount === 0) {
         return res.status(404).json({ error: "Expense not found" });
     }
 
+    // findOne() method retrieves the updated document from the expenses collection that matches the query { _id: new ObjectId(id) }
+    // this allows me to get the saved version of the document after the update operation, and sends it as a JSON response to the client
     const updated = await db.collection("expenses").findOne({ _id: new ObjectId(id) });
 
-    res.json(updated);
+    res.json(updated); // sends full updated document as JSON response to client
 });
 
 // DELETE request for id endpoint (for removing)
