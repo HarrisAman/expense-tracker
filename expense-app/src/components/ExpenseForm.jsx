@@ -1,5 +1,5 @@
 // expense-app/src/components/ExpenseForm.jsx for adding new expenses and editing existing expenses
-
+// useState in this case is used for form inputs and app state (the data my app remembers)
 import { useState } from "react"; // useState is a React hook that allows me to add state to functional components. Returns an array with two elements: current state value and a function to update it
 
 // declaring ExpenseForm component as function taking 3 props:
