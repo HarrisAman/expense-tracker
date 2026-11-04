@@ -15,7 +15,7 @@ export default function ExpenseItem({ expense, isEditing, onEdit, onCancel, onSa
       <li> 
         <ExpenseForm
           initial={expense} // passing intial put the form in edit mode with the current expense values
-          onSubmit={(changes) => onSave(expense._id, changes)}
+          onSubmit={(changes) => onSave(expense._id, changes)} // onSubmit takes the changes to the specific expense and saves it
           onCancel={onCancel} // makes the cancel button appear
         />
       </li>
@@ -25,7 +25,7 @@ export default function ExpenseItem({ expense, isEditing, onEdit, onCancel, onSa
   return ( // <span> is an inline element that is used to group the text and buttons together
     <li>
       <span> 
-        {expense.title}: ${expense.amount.toFixed(2)}{" "} 
+        {expense.title}: ${expense.amount.toFixed(2)} 
         <small>
           (added {new Date(expense.createdAt).toLocaleString()})
         </small>
@@ -37,7 +37,6 @@ export default function ExpenseItem({ expense, isEditing, onEdit, onCancel, onSa
 }
 
 // line 28: expense.title inserts the title, followed by the $amount formatted the number to 2 decimal places
-// and returns a string. The blank space is for spacing between the amount and the small text
 // <small> is for rendering smaller text
 // line 30: converts the string back into a date object and formats it to a local time zone
 // line 33-34: passing the functions down but waits to be clicked first then calls the function with the expense._id
