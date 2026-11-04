@@ -2,8 +2,9 @@
 
 A full-stack expense tracker with full CRUD. Add expenses (including backdated ones), edit them, delete them, and see them grouped by day with daily totals.
 
-**Live app:** <your-frontend-url>
-**API:** <your-render-url>/api/health
+**Live app:** <https://expense-tracker-nu-rose-61.vercel.app>
+**API:** <https://expense-tracker-e3ax.onrender.com/api/health>
+**API:** <https://expense-tracker-e3ax.onrender.com/api/expenses>
 
 > The API runs on Render's free tier and sleeps after inactivity. The first request can take 30 to 60 seconds to wake it.
 
