@@ -99,7 +99,7 @@ router.put("/:id", async (req, res) => {
     }
 
     if (amount !== undefined) { // check if amount is provided in the request body and validate it
-        if (typeof amount !== "number" || Number.isNaN(amount)) { // if amount IS NOT a number OR IS NaN (not a number), return errors
+        if (typeof amount !== "number" || Number.isNaN(amount) || amount <= 0) { // if amount IS NOT a number OR IS NaN (not a number) OR less than or equal to 0, return errors
             return res.status(400).json({ error: "Amount must be a number" });
         }
         updates.amount = amount; // adds the number property to the updates object
@@ -124,7 +124,7 @@ router.put("/:id", async (req, res) => {
     // stores result in result variable and awaits until the update is complete
     const result = await db.collection("expenses").updateOne({ _id: new ObjectId(id) }, { $set: { ...updates, updatedAt: new Date() }});
 
-    // matchedCount is how many documents matched the filter - with updatedOne its 0 or 1
+    // matchedCount is how many documents matched the filter - with updateOne its 0 or 1
     // if result is 0, there was no id to be found, return 404 error with message
     if (result.matchedCount === 0) {
         return res.status(404).json({ error: "Expense not found" });
