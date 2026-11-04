@@ -70,7 +70,7 @@ router.get("/", async (req, res) => { // all the same .get() is handler for read
     // .sort() sorts the results in descending order (-1) based on the _id field (newest first - timestamp)
     // and .toArray() converts the result to an array of documents
     // stores in expenses variable and awaits until the query is complete
-    const expenses = await db.collection("expenses").find({ isActive: 1 }).sort({ _id: -1 }).toArray(); 
+    const expenses = await db.collection("expenses").find({ isActive: 1 }).sort({ date: -1, _id: -1 }).toArray(); 
     // converts the result to an array of documents and sends it as a JSON response to the client (browser)
     res.json(expenses);
 });
