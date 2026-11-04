@@ -8,6 +8,17 @@ import { getExpenses, createExpense, updateExpense, deleteExpense } from "./api"
 import ExpenseForm from "./components/ExpenseForm"; // import two child components
 import ExpenseList from "./components/ExpenseList";
 
+// sorts expenses together by day
+function sortExpenses(list) { // takes an array of expenses
+  return [...list].sort( // returns a copied array into new one then .sort mutates it newest date first, same date newest created
+    // takes two items a, b and returns a number (a.date/b.date are ISO strings - "2026-10-23T00:00:00.000Z", 
+    // turns into Date object and subtracts the numbers which gives the difference in milliseconds - the order b-a makes it descending (newest first))
+    // if left side is falsy evaluates to 0 then compare the local _ids as strings and returns negative or positive
+    // larger id means created later (show first)
+    (a, b) => new Date(b.date) - new Date(a.date) || b._id.localeCompare(a._id)
+  );
+}
+
 // declares the component 
 export default function App() {
   // react re-renders the component with the new value
@@ -29,7 +40,8 @@ export default function App() {
   async function handleCreate(data) { // data is { title, amount } from ExpenseForm
     try { // try/catch block that sends the POST and waits
       const created = await createExpense(data); // created is the saved expense from my route
-      setExpenses((prev) => [created, ...prev]); // explain this Adds it to the top taking the old state then [created, ...prev] builds a new array (new item then spread copy of old ones)
+      // Adds it to the top taking the old state then [created, ...prev] builds a new array (new item then spread copy of old ones)
+      setExpenses((prev) => sortExpenses([created, ...prev])); // sortExpenses takes that array, makes a copy and returns a sorted version
       setError(""); // on success clear old error and return true
       return true;
     } catch (err) { // on failure api.js thorws error and carries the error message and return false
@@ -44,7 +56,8 @@ export default function App() {
       // replaces one expense in the list with its updated version, leaving everything else untouched
       // setExpenses makes React re-render, passes in the latest list (prev) builds new array with .map(), e is the current expense
       // if this expense id matches for the one that is edited, use updated (the change) otherwise keep it the same
-      setExpenses((prev) => prev.map((e) => (e._id === id ? updated : e))); 
+      // if the date was changed then it will sort it and move it to the correct day group
+      setExpenses((prev) => sortExpenses(prev.map((e) => (e._id === id ? updated : e)))); 
       setEditingId(null); // closes the editing form so the row returns to display mode
       setError(""); // on success clear old error and return true
       return true; // the T/F only needed to tell ExpenseForm whether or not to clear inputs so not needed for update
@@ -87,11 +100,11 @@ export default function App() {
   );
 }
 
-// line 72: if error message show on page, if not show nothing - error is the state string (reads the error variable) so 
+// line 85: if error message show on page, if not show nothing - error is the state string (reads the error variable) so 
 // "" (empty string) when everything is fine or a error message. role="alert" is for shows that there was error even if you cant see the page
-// line 73: renders my ExpenseForm component (the add form) - only one prop onSubmit is passed (the data)
-// line 74: while loading is true show <p> tag, once the first fetch ends finally is set to false and shows <ExpenseList> 
-// lines 78-83: expenses is the name{value} - ExpenseList reads it with ({expenses, ...}) so which data to show
+// line 86: renders my ExpenseForm component (the add form) - only one prop onSubmit is passed (the data)
+// line 87: while loading is true show <p> tag, once the first fetch ends finally is set to false and shows <ExpenseList> 
+// lines 90-96: expenses is the name{value} - ExpenseList reads it with ({expenses, ...}) so which data to show
 // editingId shows which row shows the edit form, the onCallbacks let the children ask App to change state when user clicks
 // onEdit is set to setEditingId because it gets called with an id already so its a direct pass
 // onCancel gets called with nothing so its wrapped in a function with the setter set to null to stop the display of it being edited
