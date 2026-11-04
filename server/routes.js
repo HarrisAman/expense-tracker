@@ -104,7 +104,7 @@ router.get("/:id", async (req, res) => {
 router.put("/:id", async (req, res) => {
     
     const { id } = req.params; // req.params says which expense to update (the id itself)
-    const { title, amount, isActive } = req.body; // req.body says to change the title, amount, or isActive (any combination)
+    const { title, amount, isActive, date } = req.body; // req.body says to change the title, amount, isActive, date (any combination)
 
     if (!ObjectId.isValid(id)) { // ObjectId is a 24 character hex string (key id) - isValid() is a method that checks if a value could be turned into an ObjectId
         return res.status(400).json({ error: "Invalid id" });
@@ -134,6 +134,15 @@ router.put("/:id", async (req, res) => {
         }
         updates.isActive = isActive; // adds the isActive property to the updates object
     }
+
+    if (date !== undefined) { // if client gives date (not undefined)
+        const parsed = parseDate(date); // parseDate returns a date for good input stored in parsed
+        if (!parsed) { // if parsed is no good returns error
+            return res.status(400).json({ error: "Date must be in YYYY-MM-DD format." }); // if date is invalid throw error
+        }
+        updates.date = parsed; // overwrites the default date with the parsed date (why let was used)
+    }
+
     // if updates object is empty (no valid fields to update), return 400 error with message
     // .keys() returns an array of the object's property names
     if (Object.keys(updates).length === 0) { // .length checks how many properties are in the updates object - if 0, then nothing to update
