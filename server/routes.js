@@ -4,15 +4,24 @@ import { ObjectId } from "mongodb"; // imports ObjectId class from mongodb packa
 
 const router = Router(); // create router variable to hold the instance of Router class and attach handlers
 
+// accepts "YYYY-MM-DD", returns a Date or null if invalid
+function parseDate(value) { // helper function takes a value (whatever client sends as date)
+  // if value is NOT a string OR does not match the format of that expression (date) .test() returns  T/F is values match the pattern
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null; // if so return null
+  const d = new Date(value); // builds date object from text to keep everything consistent wherever the server runs
+  return Number.isNaN(d.getTime()) ? null : d; // d.getTime() returns the data as a number so for invalid dates returns Not a number
+  // checks if valid date, if not return null, if is return the date
+}
+
 // registers a handler for POST requests (method to create something)
 // "/" is the path for the route, which is relative to the base path of the router 
 // (req, res) two objects Express provides to handle the request and response: 
 // req contains information about the incoming request / res is used to send a response back
 router.post("/", async (req, res) => { 
     
-    // destructuring assignment to extract title and amount properties from req.body object
+    // destructuring assignment to extract title, amount, and date properties from req.body object
     // from app.use(express.json())
-    const { title, amount } = req.body;
+    const { title, amount, date } = req.body;
     
     // validation if title IS NOT a string OR IS an empty string, return errors
     if (typeof title !== "string" || title.trim() === "") {     // trim() removes whitespace
@@ -28,8 +37,22 @@ router.post("/", async (req, res) => {
     // new Date() creates a new Date object representing the current date and time the line runs - into variable now
     const now = new Date();
 
+    // default to today when no date is sent
+    // now is the moment the request arrives
+    // ISOString coverts date to text format
+    // .slice() takes the first 10 characters
+    // let because it can be reassigned in the if statement
+    let expenseDate = new Date(now.toISOString().slice(0, 10)); // now is the moment the request arrives 
+    if (date !== undefined) { // if client gives date (not undefined)
+        const parsed = parseDate(date); // parseDate returns a date for good input stored in parsed
+        if (!parsed) { // if parsed is no good returns error
+            return res.status(400).json({ error: "Date must be in YYYY-MM-DD format." }); // if date is invalid throw error
+        }
+        expenseDate = parsed; // overwrites the default date with the parsed date (why let was used)
+    }
+
      // create new object doc with relevant fields (allows me to build the doc myself)
-    const doc = { title: title.trim(), amount, createdAt: now, updatedAt: now, isActive: 1 };
+    const doc = { title: title.trim(), amount, date: expenseDate, createdAt: now, updatedAt: now, isActive: 1 };
 
     // db.collection("expenses") accesses the expenses collection in the database, 
     // and .insertOne(doc) inserts the doc object into the collection
