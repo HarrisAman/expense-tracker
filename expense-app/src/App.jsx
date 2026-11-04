@@ -1,122 +1,110 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+// App.jsx is the main component of the app that manages the state and handles the API calls for creating, updating, and deleting expenses. 
+// It also renders the ExpenseForm and ExpenseList components.
 
-function App() {
-  const [count, setCount] = useState(0)
+// useEffect is a React hook that is used to fetch data on startup
+// useState remembers values between renders and triggers a re-render when they change
+import { useEffect, useState } from "react"; 
+import { getExpenses, createExpense, updateExpense, deleteExpense } from "./api"; // imports the API functions
+import ExpenseForm from "./components/ExpenseForm"; // import two child components
+import ExpenseList from "./components/ExpenseList";
 
-  return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+// sorts expenses together by day
+function sortExpenses(list) { // takes an array of expenses
+  return [...list].sort( // returns a copied array into new one then .sort mutates it newest date first, same date newest created
+    // takes two items a, b and returns a number (a.date/b.date are ISO strings - "2026-10-23T00:00:00.000Z", 
+    // turns into Date object and subtracts the numbers which gives the difference in milliseconds - the order b-a makes it descending (newest first))
+    // if left side is falsy evaluates to 0 then compare the local _ids as strings and returns negative or positive
+    // larger id means created later (show first)
+    (a, b) => new Date(b.date) - new Date(a.date) || b._id.localeCompare(a._id)
+  );
 }
 
-export default App
+// declares the component 
+export default function App() {
+  // react re-renders the component with the new value
+  const [expenses, setExpenses] = useState([]); // list of expenses, initially empty array, returns current value and setter function
+  const [loading, setLoading] = useState(true); // removes ambiguity when fetching expenses (true means the data hasnt arrived yet)
+  const [error, setError] = useState(""); // error message, empty when there is none, any failed API call stores the message here
+  const [editingId, setEditingId] = useState(null); // the id of the row being edited (null if none) keeping one id is App guarantees only one row can be edited at a time
+
+  // fetch data on startup - useEffect()
+  useEffect(() => {
+    getExpenses() // returns a Promise from api.js
+      .then(setExpenses) // when data arrives pass is to setExpenses, .then() is for when Promise succeeds (use the result)
+      .catch((err) => setError(err.message)) // if request fails save the message in error, Promise fails (handle the error)
+      .finally(() => setLoading(false)); // either way (after succes or failure - do this)
+  }, []); // empty array means run once, after first render
+
+  // 3 handlers: call API, if succeed, update state
+  // handleCreate adds a new expense to the top, returns T/F so ExpenseForm knows whether to clear inputs
+  async function handleCreate(data) { // data is { title, amount } from ExpenseForm
+    try { // try/catch block that sends the POST and waits
+      const created = await createExpense(data); // created is the saved expense from my route
+      // Adds it to the top taking the old state then [created, ...prev] builds a new array (new item then spread copy of old ones)
+      setExpenses((prev) => sortExpenses([created, ...prev])); // sortExpenses takes that array, makes a copy and returns a sorted version
+      setError(""); // on success clear old error and return true
+      return true;
+    } catch (err) { // on failure api.js thorws error and carries the error message and return false
+      setError(err.message);
+      return false; // ExpenseForm uses the boolean to decide whether to clear the inputs
+    }
+  }
+  // calls API, swaps updated expense into list with map and closes edit form
+  async function handleSave(id, changes) { // id for which expense to update, and what changes to make to the object (req.body)
+    try {
+      const updated = await updateExpense(id, changes); // sends the PUT and receive the updated document from route
+      // replaces one expense in the list with its updated version, leaving everything else untouched
+      // setExpenses makes React re-render, passes in the latest list (prev) builds new array with .map(), e is the current expense
+      // if this expense id matches for the one that is edited, use updated (the change) otherwise keep it the same
+      // if the date was changed then it will sort it and move it to the correct day group
+      setExpenses((prev) => sortExpenses(prev.map((e) => (e._id === id ? updated : e)))); 
+      setEditingId(null); // closes the editing form so the row returns to display mode
+      setError(""); // on success clear old error and return true
+      return true; // the T/F only needed to tell ExpenseForm whether or not to clear inputs so not needed for update
+    } catch (err) {
+      setError(err.message);
+      return false;
+    }
+  }
+  // confirm to delete expense, call API to remove, remove from screen
+  async function handleDelete(id) { // takes the id of the expense so it knows what to remove
+    // window.confirm shows the browsers OK/Cancel popup so return true for Ok and False for Cancel
+    if (!window.confirm("Delete this expense?")) return; // if NOT confirmed return (exit function), otherwise run function 
+    try {
+      await deleteExpense(id); // calls API and runs deleteOne()
+      setExpenses((prev) => prev.filter((e) => e._id !== id)); // updating list on screen, .filter() builds a new array keeping only the true items - every expense who'd id is not the deleted one
+      setError(""); // on success clear old error
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+  // shows the data on the page
+  return ( // returns JSX allows me to do the following <main> is telling us this is the main content of the page
+    <main> 
+      <h1>Expense Tracker</h1>
+      {error && <p role="alert">{error}</p>} 
+      <ExpenseForm onSubmit={handleCreate} />
+      {loading ? (
+        <p>Loading...</p>
+      ) : (
+        <ExpenseList
+          expenses={expenses}
+          editingId={editingId}
+          onEdit={setEditingId}
+          onCancel={() => setEditingId(null)}
+          onSave={handleSave}
+          onDelete={handleDelete}
+        />
+      )}
+    </main>
+  );
+}
+
+// line 85: if error message show on page, if not show nothing - error is the state string (reads the error variable) so 
+// "" (empty string) when everything is fine or a error message. role="alert" is for shows that there was error even if you cant see the page
+// line 86: renders my ExpenseForm component (the add form) - only one prop onSubmit is passed (the data)
+// line 87: while loading is true show <p> tag, once the first fetch ends finally is set to false and shows <ExpenseList> 
+// lines 90-96: expenses is the name{value} - ExpenseList reads it with ({expenses, ...}) so which data to show
+// editingId shows which row shows the edit form, the onCallbacks let the children ask App to change state when user clicks
+// onEdit is set to setEditingId because it gets called with an id already so its a direct pass
+// onCancel gets called with nothing so its wrapped in a function with the setter set to null to stop the display of it being edited
