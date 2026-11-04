@@ -1,0 +1,44 @@
+// ExpenseItem.jsx loops the whole array and renders each expense item and the changes.
+ 
+import ExpenseForm from "./ExpenseForm"; // import ExpenseForm component to render the form for editing an expense item
+
+// function ExpenseItem takes 6 props: (properties passed from parent component App.jsx)
+// expense: the expense object to be rendered (array)
+// isEditing: boolean indicating whether the expense item is currently being edited
+// onEdit: function that is called when the edit button is clicked for an expense item - passed from parent component (ExpenseList.jsx) and handles the editing state
+// onCancel: function that is called when the cancel button is clicked for an expense item - passed from parent component (ExpenseList.jsx) and handles the cancel action (hides the form)
+// onSave: function that is called when the save button is clicked for an expense item - passed from parent component (ExpenseList.jsx) and handles the API call to update the expense
+// onDelete: function that is called when the delete button is clicked for an expense item - passed from parent component (ExpenseList.jsx) and handles the API call to delete the expense
+export default function ExpenseItem({ expense, isEditing, onEdit, onCancel, onSave, onDelete }) {
+  if (isEditing) { // if this row is being edited, return the edit version
+    return ( // if isEditing is true, render the ExpenseForm component for editing the expense item
+      <li> 
+        <ExpenseForm
+          initial={expense} // passing intial put the form in edit mode with the current expense values
+          onSubmit={(changes) => onSave(expense._id, changes)}
+          onCancel={onCancel} // makes the cancel button appear
+        />
+      </li>
+    );
+  }
+  // if isEditing was false, render the expense item with its title, amount, created date, and edit/delete buttons
+  return ( // <span> is an inline element that is used to group the text and buttons together
+    <li>
+      <span> 
+        {expense.title}: ${expense.amount.toFixed(2)}{" "} 
+        <small>
+          (added {new Date(expense.createdAt).toLocaleString()})
+        </small>
+      </span>
+      <button onClick={() => onEdit(expense._id)}>Edit</button>
+      <button onClick={() => onDelete(expense._id)}>Delete</button>
+    </li>
+  );
+}
+
+// line 28: expense.title inserts the title, followed by the $amount formatted the number to 2 decimal places
+// and returns a string. The blank space is for spacing between the amount and the small text
+// <small> is for rendering smaller text
+// line 30: converts the string back into a date object and formats it to a local time zone
+// line 33-34: passing the functions down but waits to be clicked first then calls the function with the expense._id
+// as an argument to identify which expense item to edit or delete
