@@ -8,6 +8,7 @@ const BASE = `${import.meta.env.VITE_API_URL}/api/expenses`; // reads variables 
 // and returns a Promise that resolves to the JSON response data or throws an error if the request fails.
 async function request(url, options) {
   const res = await fetch(url, options); // fetch() is a built-in function that makes HTTP requests to the server and returns a Promise that resolves to the Response object representing the response to the request
+  const data = await res.json(); // reads the body of the server and turns JSON into JS object - data holds all my requests
   if (!res.ok) throw new Error(data.error || "Request failed"); // if response is not ok (status code is not 2xx), throw an error with the message from the server or a default message
   return data; // on success return data back to the caller (App.jsx) to use in the component
 }
