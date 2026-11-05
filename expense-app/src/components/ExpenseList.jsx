@@ -29,19 +29,19 @@ export default function ExpenseList({ expenses, editingId, onEdit, onCancel, onS
     let group = groups[groups.length - 1]; // takes the last bucket puts in group variable and can be reassigned (look at most recent box)
     if (!group || group.key !== key) { // if group is empty (no box) OR it doesnt match (different day)  
       group = { key, items: [] }; // make a new box and set to group (items: [Coffee, Tea])
-      groups.push(group); // push that  into pile (groups)
+      groups.push(group); // adds the bucket to that collection (groups) (bucket into a list of buckets)
     }
-    group.items.push(expense); // push the expense in the current box
+    group.items.push(expense); // adds the expense into that bucket (puts expense into one buckets list)
   }
   
   return ( // draws all this data
     <div>
         {groups.map((group) => { // for each box (map builds a JSX array - a section per day)
-            // group.items is the array of expenses for one day (takes sum, e - the running total and the current expense e)
+            // group.items is the array of expenses for one day (takes 2 args sum, e - the running total and the current expense e)
             const total = group.items.reduce((sum, e) => sum + e.amount, 0); // add up the amounts with reduce() (0 is the starting val)
             return ( // line 43: draws once section (day), key is required to track each one (day string is unique per group) - formatDay becomes Friday etc...
                 <section key={group.key}> 
-                    <h2>{formatDay(group.key)} (${total.toFixed(2)})</h2>
+                    <h2>{formatDay(group.key)} (${total.toLocaleString('en-US', 2)})</h2>
                     <ul> 
                         {group.items.map((expense) => ( // .map() array method that runs a function on each expense returning an new array of ExpenseItem components, each with a unique key prop (expense._id) and the expense object passed as a prop
                             // each expense becomes an ExpenseItem element 
