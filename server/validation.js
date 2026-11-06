@@ -35,7 +35,7 @@ export function validateNewExpense(body, now = new Date()) {
     if (date !== undefined) { // if client gives date (not undefined)
         const parsed = parseDate(date); // parseDate returns a date for good input stored in parsed
         if (!parsed) { // if parsed is no good returns error
-            return res.status(400).json({ error: "Date must be in YYYY-MM-DD format." }); // if date is invalid throw error
+            return { error: "Date must be a valid date in YYYY-MM-DD format." }; // if date is invalid throw error
         }
         expenseDate = parsed; // overwrites the default date with the parsed date (why let was used)
     }
@@ -69,7 +69,8 @@ export function validateExpenseUpdate(body) {
 
   // if updates object is empty (no valid fields to update), return 400 error with message
     // .keys() returns an array of the object's property names
-    if (Object.keys(data).length === 0) { // .length checks how many properties are in the updates object - if 0, then nothing to update
-        return res.status(400).json({ error: "Nothing to update" });
+    if (Object.keys(data).length === 0) {
+        return { error: "Nothing to update." };
     }
+    return { data };
 }
