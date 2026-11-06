@@ -13,7 +13,7 @@ export function dayKey(expense) { // takes 1 expense object
 }
 
 // sorts expenses together by day
-function sortExpenses(list) { // takes an array of expenses
+export function sortExpenses(list) { // takes an array of expenses
     return [...list].sort( // returns a copied array into new one then .sort mutates it newest date first, same date newest created
         // takes two items a, b and returns a number (a.date/b.date are ISO strings - "2026-10-23T00:00:00.000Z", 
         // if b.date is missing use empty string, and splice to first 10 chars
@@ -49,7 +49,7 @@ export function groupByDay(expenses) {
 }
 
 // function to format the date to something more readable
-function formatDay(key) { // takes key value (date)
+export function formatDay(key) { // takes key value (date)
   if (key === "none") return "No date"; // expenses with no date return "invalid date" (for older documents and prevents crash)
   return new Date(`${key}T00:00:00Z`).toLocaleDateString("en-US", { // returns the date combining strings of key and T00:00:00Z converts to local readability and options
     timeZone: "UTC", // dates are stored at midnight UTC; avoids an off-by-one day
