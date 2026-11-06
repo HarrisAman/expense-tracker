@@ -21,7 +21,7 @@ function sortExpenses(list) { // takes an array of expenses
 
 // declares the component 
 export default function App() {
-  // react re-renders the component with the new value
+  // react re-renders the component with the new value [array destructuring]
   const [expenses, setExpenses] = useState([]); // list of expenses, initially empty array, returns current value and setter function
   const [loading, setLoading] = useState(true); // removes ambiguity when fetching expenses (true means the data hasnt arrived yet)
   const [error, setError] = useState(""); // error message, empty when there is none, any failed API call stores the message here
