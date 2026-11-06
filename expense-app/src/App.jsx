@@ -7,17 +7,7 @@ import { useEffect, useState } from "react";
 import { getExpenses, createExpense, updateExpense, deleteExpense } from "./api"; // imports the API functions
 import ExpenseForm from "./components/ExpenseForm"; // import two child components
 import ExpenseList from "./components/ExpenseList";
-
-// sorts expenses together by day
-function sortExpenses(list) { // takes an array of expenses
-  return [...list].sort( // returns a copied array into new one then .sort mutates it newest date first, same date newest created
-    // takes two items a, b and returns a number (a.date/b.date are ISO strings - "2026-10-23T00:00:00.000Z", 
-    // turns into Date object and subtracts the numbers which gives the difference in milliseconds - the order b-a makes it descending (newest first))
-    // if left side is falsy evaluates to 0 then compare the local _ids as strings and returns negative or positive
-    // larger id means created later (show first)
-    (a, b) => new Date(b.date) - new Date(a.date) || b._id.localeCompare(a._id)
-  );
-}
+import { sortExpenses } from "./lib/expenseLogic"; // import helper sort expenses function
 
 // declares the component 
 export default function App() {
@@ -68,8 +58,6 @@ export default function App() {
   }
   // confirm to delete expense, call API to remove, remove from screen
   async function handleDelete(id) { // takes the id of the expense so it knows what to remove
-    // window.confirm shows the browsers OK/Cancel popup so return true for Ok and False for Cancel
-    if (!window.confirm("Delete this expense?")) return; // if NOT confirmed return (exit function), otherwise run function 
     try {
       await deleteExpense(id); // calls API and runs deleteOne()
       setExpenses((prev) => prev.filter((e) => e._id !== id)); // updating list on screen, .filter() builds a new array keeping only the true items - every expense who'd id is not the deleted one
