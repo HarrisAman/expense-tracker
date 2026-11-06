@@ -1,6 +1,7 @@
 // ExpenseItem.jsx loops the whole array and renders each expense item and the changes.
  
 import ExpenseForm from "./ExpenseForm"; // import ExpenseForm component to render the form for editing an expense item
+import { formatCurrency } from "../lib/expenseLogic"; // import helper format function
 
 // function ExpenseItem takes 6 props: (properties passed from parent component App.jsx)
 // expense: the expense object to be rendered (array)
@@ -25,7 +26,7 @@ export default function ExpenseItem({ expense, isEditing, onEdit, onCancel, onSa
   return ( // <span> is an inline element that is used to group the text and buttons together
     <li>
       <span> 
-        {expense.title}: ${expense.amount.toFixed(2)} 
+        {expense.title}: {formatCurrency(expense.amount)} 
         <small>
           (added {new Date(expense.createdAt).toLocaleString()})
         </small>
