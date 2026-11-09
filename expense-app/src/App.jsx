@@ -7,6 +7,9 @@ import { useEffect, useState } from "react";
 import { getExpenses, createExpense, updateExpense, deleteExpense } from "./api"; // imports the API functions
 import ExpenseForm from "./components/ExpenseForm"; // import two child components
 import ExpenseList from "./components/ExpenseList";
+import ExpenseCalendar from "./components/ExpenseCalendar.jsx";
+import { expensesForDay } from "./lib/ExpenseCalendar.js";
+import { today } from "./lib/ExpenseForm.js";
 import { sortExpenses } from "./lib/ExpenseList.js"; // import helper sort expenses function
 
 // declares the component 
@@ -16,6 +19,7 @@ export default function App() {
   const [loading, setLoading] = useState(true); // removes ambiguity when fetching expenses (true means the data hasnt arrived yet)
   const [error, setError] = useState(""); // error message, empty when there is none, any failed API call stores the message here
   const [editingId, setEditingId] = useState(null); // the id of the row being edited (null if none) keeping one id is App guarantees only one row can be edited at a time
+  const [selectedDay, setSelectedDay] = useState(today());
 
   // fetch data on startup - useEffect()
   useEffect(() => {
@@ -71,12 +75,19 @@ export default function App() {
     <main> 
       <h1>Expense Tracker</h1>
       {error && <p role="alert">{error}</p>} 
-      <ExpenseForm onSubmit={handleCreate} />
-      {loading ? (
-        <p>Loading...</p>
-      ) : (
+      <ExpenseForm 
+        key={selectedDay} 
+        defaultDate={selectedDay} 
+        onSubmit={handleCreate} 
+      />
+      <ExpenseCalendar 
+        expenses={expenses} 
+        selectedDay={selectedDay} 
+        onSelectDay={setSelectedDay} 
+        />
+      {loading ? ( <p>Loading...</p> ) : (
         <ExpenseList
-          expenses={expenses}
+          expenses={expensesForDay(expenses, selectedDay)}
           editingId={editingId}
           onEdit={setEditingId}
           onCancel={() => setEditingId(null)}

@@ -8,8 +8,8 @@ import { initialFormValues, toPayload, valuesAfterAdd } from "../lib/ExpenseForm
 // initial: object with the initial values for the form fields (title/amount/date) - used when editing an existing expense
 // onSubmit: function that is called when the form is submitted - passed from parent component (App.jsx) and handles the API call to create or update the expense
 // onCancel: function that is called when the cancel button is clicked - passed from parent component (App.jsx) and handles the cancel action (hides the form)
-export default function ExpenseForm({ initial, onSubmit, onCancel }) { 
-  const [values, setValues] = useState(() => initialFormValues(initial)); //
+export default function ExpenseForm({ initial, defaultDate, onSubmit, onCancel }) { 
+  const [values, setValues] = useState(() => initialFormValues(initial, defaultDate)); //
   const titleRef = useRef(null); // lets me hold onto the title input to control directly
 
   const setField = (name) => (e) =>

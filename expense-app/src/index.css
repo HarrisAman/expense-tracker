@@ -5,10 +5,32 @@ body {
   margin: 0;
 }
 
-main {
-  max-width: 640px;
-  margin: 2rem auto;
-  padding: 0 1rem;
+main { max-width: 760px; }
+
+.calendar { margin-bottom: 1.5rem; }
+.calendar-header { display: flex; align-items: center; justify-content: space-between; }
+.calendar-header h2 { border: 0; font-size: 1.1rem; margin: 0; }
+
+.calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.weekday { text-align: center; font-size: 0.8rem; color: #64748b; padding: 0.25rem 0; }
+.blank { min-height: 64px; }
+
+.day {
+  min-height: 64px;
+  display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between;
+  padding: 0.35rem; background: white; color: #1f2937;
+  border: 1px solid #e2e8f0; border-radius: 8px; text-align: left;
+}
+.day:hover { background: #eff6ff; }
+.day.today .day-number { background: #2563eb; color: white; border-radius: 999px; padding: 0 0.4rem; }
+.day.selected { border-color: #2563eb; box-shadow: 0 0 0 2px #bfdbfe; }
+.day.has-expenses { background: #f8fafc; }
+.day-number { font-size: 0.85rem; font-weight: 600; }
+.day-total { font-size: 0.72rem; color: #15803d; font-weight: 600; }
+
+@media (max-width: 520px) {
+  .day, .blank { min-height: 48px; }
+  .day-total { font-size: 0.62rem; }
 }
 
 h1 { text-align: center; }

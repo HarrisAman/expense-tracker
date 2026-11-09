@@ -2,12 +2,12 @@
 export const today = () => new Date().toLocaleDateString("en-CA");
 
 // starting values; `initial` is an existing expense, or undefined when adding
-export function initialFormValues(initial) {
+export function initialFormValues(initial, defaultDate) {
     return {
         title: initial?.title ?? "", // useState hook to create a state variable title and a function setTitle to update it
         amount: initial?.amount ?? "", // useState hook to create a state variable amount and a function setAmount to update it
         // if not initial or no date whole thing is undefined. date arrives as ISO string so slice cuts to 10 characters, fallback to today
-        date: initial?.date?.slice(0, 10) ?? today(), // useState hook to create a state variable date and a function setDate to update it
+        date: initial?.date?.slice(0, 10) ?? defaultDate ?? today(), // useState hook to create a state variable date and a function setDate to update it
     };
 }
 
