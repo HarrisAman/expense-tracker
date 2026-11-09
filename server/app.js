@@ -10,7 +10,7 @@ const app = express(); // (express() is a function) creates an instance of expre
 // registers middleware function for the app. Middleware functions are functions that have access to the request and response objects,
 // and can modify them or perform other actions before passing control to the next middleware function in the stack.
 // CORS middleware which allows it to accept requests from different origins (domains). This is important for web applications that need to make requests to APIs hosted on different domains
-app.use(cors());
+app.use(cors({ origin: process.env.CLIENT_URL || "http://localhost:5173" }));
 // parses incoming requests with JSON payloads and makes the data available in req.body. This is important for APIs that receive data from clients in JSON format.
 app.use(express.json());
 
