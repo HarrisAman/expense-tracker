@@ -1,7 +1,7 @@
 // ExpenseList.jsx renders a list of expense items and handles the editing state for each item.
 
 import ExpenseItem from "./ExpenseItem"; // import ExpenseItem component to render each expense item in the list
-import { groupByDay, formatDay, formatCurrency } from "../lib/expenseLogic"; // import helper format functions 
+import { groupByDay, formatDay, formatCurrency } from "../lib/sharedLogic"; // import helper format functions 
 
 
 // function ExpenseList takes 6 props: (properties passed from parent component App.jsx and child component ExpenseItem.jsx)
@@ -32,15 +32,15 @@ export default function ExpenseList({ expenses, editingId, onEdit, onCancel, onS
                       expense={expense} // passing the expense object as a prop to the ExpenseItem component to be displayed
                       isEditing={editingId === expense._id} // boolean indicating whether the current expense item is being edited (true if the editingId matches the expense._id) why
                       // these four are callback functions passed down to ExpenseItem to handle the edit, cancel, save, and delete actions for each expense item
-                      onEdit={onEdit} //
+                      onEdit={onEdit}
                       onCancel={onCancel}
                       onSave={onSave}
                       onDelete={onDelete}
                     />
                   ))}
                 </ul>
-              </section>
+            </section>
           ))}
       </div>
-    );
-  }
+  );
+}

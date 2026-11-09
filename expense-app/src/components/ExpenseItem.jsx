@@ -2,7 +2,7 @@
 
 import { useState } from "react"; // import useState to build inline inputs
 import ExpenseForm from "./ExpenseForm"; // import ExpenseForm component to render the form for editing an expense item
-import { formatCurrency, formatDay, formatDateTime, dayKey  } from "../lib/expenseLogic"; // import helper format functions
+import { formatCurrency, formatDay, formatDateTime, dayKey, statusLabel  } from "../lib/sharedLogic"; // import helper format functions
 
 // function ExpenseItem takes 6 props: (properties passed from parent component App.jsx)
 // expense: the expense object to be rendered (array)
@@ -32,15 +32,15 @@ export default function ExpenseItem({ expense, isEditing, onEdit, onCancel, onSa
   // if isEditing was false, render the expense item with its title, amount, created date, and edit/delete buttons
   return ( // <span> is an inline element that is used to group the text and buttons together
     <li>
-      <div classname="row">
-        <span classname="summary"> 
+      <div className="row">
+        <span className="summary"> 
           {expense.title}: {formatCurrency(expense.amount)}{" "} 
         </span>
 
         <button
           type="button"
-          classname="secondary"
-          aria-expanded={showDetails()}
+          className="secondary"
+          aria-expanded={showDetails}
           onClick={() => setShowDetails((open) => !open)}
         >
           {showDetails ? "Hide" : "Details"}
@@ -48,7 +48,7 @@ export default function ExpenseItem({ expense, isEditing, onEdit, onCancel, onSa
 
         <button
           type="button"
-          classname="secondary"
+          className="secondary"
           onClick={() => onEdit(expense._id)}>
           Edit
         </button>
@@ -89,7 +89,7 @@ export default function ExpenseItem({ expense, isEditing, onEdit, onCancel, onSa
           <dt>Last updated</dt>
           <dd>{formatDateTime(expense.updatedAt)}</dd>
           <dt>Status</dt>
-          <dd>{expense.isActive === 1 ? "Active" : "Inactive"}</dd>
+          <dd>{statusLabel(expense)}</dd>
         </dl>
       )}
     </li>
