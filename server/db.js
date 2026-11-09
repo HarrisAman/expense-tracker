@@ -7,7 +7,7 @@ import { MongoClient } from 'mongodb'; // Import the MongoClient class from the 
 const client = new MongoClient(process.env.MONGODB_URI);
 
 // client.db() method returns name of the database as expense-app, stores in db variable and can be exported to use in other files
-export const db = client.db("expense-app");
+export const db = client.db(process.env.DB_NAME || "expense-app");
 
 // async allows await to be used - this function returns a Promise to connect to database.
 export async function connectToMongoDB() {
