@@ -1,8 +1,9 @@
 // ExpenseItem.jsx loops the whole array and renders each expense item and the changes.
 
 import { useState } from "react"; // import useState to build inline inputs
-import ExpenseForm from "./ExpenseForm"; // import ExpenseForm component to render the form for editing an expense item
-import { formatCurrency, formatDay, formatDateTime, dayKey, statusLabel  } from "../lib/sharedLogic"; // import helper format functions
+import { formatCurrency, formatDay, dayKey } from "../lib/sharedLogic";
+import { formatDateTime, statusLabel  } from "../lib/ExpenseItem.js"; // import helper format functions
+import ExpenseForm from "./ExpenseForm.jsx";
 
 // function ExpenseItem takes 6 props: (properties passed from parent component App.jsx)
 // expense: the expense object to be rendered (array)

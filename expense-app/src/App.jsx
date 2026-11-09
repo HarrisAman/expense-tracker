@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import { getExpenses, createExpense, updateExpense, deleteExpense } from "./api"; // imports the API functions
 import ExpenseForm from "./components/ExpenseForm"; // import two child components
 import ExpenseList from "./components/ExpenseList";
-import { sortExpenses } from "./lib/expenseLogic"; // import helper sort expenses function
+import { sortExpenses } from "./lib/ExpenseList.js"; // import helper sort expenses function
 
 // declares the component 
 export default function App() {

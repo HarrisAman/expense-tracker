@@ -1,5 +1,5 @@
 // today as YYYY-MM-DD in the user's local time stored in variable
-export const today = () => new Date().toLocaleDateString("en-US");
+export const today = () => new Date().toLocaleDateString("en-CA");
 
 // starting values; `initial` is an existing expense, or undefined when adding
 export function initialFormValues(initial) {
