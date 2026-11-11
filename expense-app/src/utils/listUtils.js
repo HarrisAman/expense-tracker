@@ -1,4 +1,4 @@
-import { dayKey } from "./sharedLogic";
+import { dayKey } from "./formatters.js";
 
 // sorts expenses together by day
 export function sortExpenses(list) { // takes an array of expenses
@@ -23,7 +23,7 @@ export function sumAmounts(items) { // function items as an array of expense obj
 
 // function to group expenses together by day
 export function groupByDay(expenses) {
-    // expenses arrive sorted by date, so same day items are together
+  // expenses arrive sorted by date, so same day items are together
   const groups = []; // empty array that will hold buckets (related items)
   for (const expense of sortExpenses(expenses)) { // a loop that visits each expense in order - for each expense in expenses
     const key = dayKey(expense); // works out which day the current expense belongs to, stored as key variable
@@ -34,5 +34,5 @@ export function groupByDay(expenses) {
     }
     group.items.push(expense); // push the expense in the current box
   }
-  return groups.map((g) => ({ ...g, total: sumAmounts(g.items) }))
+  return groups.map((g) => ({ ...g, total: sumAmounts(g.items) })) // builds new array where each bucket is copied and given a total
 }

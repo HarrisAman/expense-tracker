@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { formatDateTime, statusLabel } from "./ExpenseItem.js";
+import { formatDateTime, statusLabel } from "../itemUtils.js";
 
 describe("formatDateTime", () => {
   it("handles a missing value", () => expect(formatDateTime(undefined)).toBe("Unknown"));

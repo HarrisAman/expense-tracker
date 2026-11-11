@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { formatCurrency, dayKey, formatDay } from "./sharedLogic.js";
+import { formatCurrency, dayKey, formatDay } from "../formatters.js";
 
 describe("formatCurrency", () => {
   it("formats two decimals", () => expect(formatCurrency(4.5)).toBe("$4.50"));

@@ -1,19 +1,18 @@
 import { useState } from "react";
-import { today } from "../lib/ExpenseForm.js";
-import { formatCurrency } from "../lib/sharedLogic.js";
-import {
-  WEEKDAYS, buildMonthGrid, cellClass, formatMonth, monthTotal, shiftMonth,
-} from "../lib/ExpenseCalendar.js";
+import { today } from "../utils/formUtils.js";
+import { formatCurrency } from "../utils/formatters.js";
+import { WEEKDAYS, buildMonthGrid, cellClass, formatMonth, monthTotal, shiftMonth } from "../utils/calendarUtils.js"; // calendar logic
 
+// building the expense calendar
 export default function ExpenseCalendar({ expenses, selectedDay, onSelectDay }) {
-  const [month, setMonth] = useState(() => today().slice(0, 7)); // UI-only state
-  const cells = buildMonthGrid(month, expenses, today());
+  const [month, setMonth] = useState(() => today().slice(0, 7)); // UI month state
+  const cells = buildMonthGrid(month, expenses, today()); // returns the flat array of cells up to end of month with expenses
 
   return (
     <section className="calendar">
       <header className="calendar-header">
         <button type="button" className="secondary" aria-label="Previous month"
-          onClick={() => setMonth(shiftMonth(month, -1))}>‹</button>
+          onClick={() => setMonth(shiftMonth(month, -1))}>‹</button> 
         <h2>{formatMonth(month)} ({formatCurrency(monthTotal(expenses, month))})</h2>
         <button type="button" className="secondary" aria-label="Next month"
           onClick={() => setMonth(shiftMonth(month, 1))}>›</button>

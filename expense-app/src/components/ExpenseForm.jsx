@@ -2,7 +2,7 @@
 // useState in this case is used for form inputs and app state (the data my app remembers)
 // useRef holds a reference to something without re-rendering; in this it points to Title input so move the cursor into it
 import { useRef, useState } from "react"; // useState is a React hook that allows me to add state to functional components. Returns an array with two elements: current state value and a function to update it
-import { initialFormValues, toPayload, valuesAfterAdd } from "../lib/ExpenseForm.js"; // add 
+import { initialFormValues, toPayload, valuesAfterAdd } from "../utils/formUtils.js"; // add 
 
 // declaring ExpenseForm component as function taking 3 props:
 // initial: object with the initial values for the form fields (title/amount/date) - used when editing an existing expense
@@ -45,7 +45,6 @@ export default function ExpenseForm({ initial, defaultDate, onSubmit, onCancel }
       <input
         type="number"
         step="0.01"
-        min="0.01"
         value={values.amount}
         onChange={setField("amount")}
         placeholder="Amount"

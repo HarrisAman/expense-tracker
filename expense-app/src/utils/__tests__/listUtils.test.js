@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { sortExpenses, sumAmounts, groupByDay } from "./ExpenseList.js";
+import { sortExpenses, sumAmounts, groupByDay } from "../listUtils.js";
 
 const e = (id, date, amount = 1) => ({
   _id: id,

@@ -5,7 +5,11 @@ body {
   margin: 0;
 }
 
-main { max-width: 760px; }
+main { 
+  max-width: 760px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
 
 .calendar { margin-bottom: 1.5rem; }
 .calendar-header { display: flex; align-items: center; justify-content: space-between; }
@@ -27,6 +31,7 @@ main { max-width: 760px; }
 .day.has-expenses { background: #f8fafc; }
 .day-number { font-size: 0.85rem; font-weight: 600; }
 .day-total { font-size: 0.72rem; color: #15803d; font-weight: 600; }
+.day.negative .day-total { color: #b91c1c; }
 
 @media (max-width: 520px) {
   .day, .blank { min-height: 48px; }

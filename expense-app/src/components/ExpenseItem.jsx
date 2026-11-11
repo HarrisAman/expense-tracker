@@ -1,8 +1,8 @@
 // ExpenseItem.jsx loops the whole array and renders each expense item and the changes.
 
 import { useState } from "react"; // import useState to build inline inputs
-import { formatCurrency, formatDay, dayKey } from "../lib/sharedLogic";
-import { formatDateTime, statusLabel  } from "../lib/ExpenseItem.js"; // import helper format functions
+import { formatCurrency, formatDay, dayKey } from "../utils/formatters.js";
+import { formatDateTime, statusLabel  } from "../utils/itemUtils.js"; // import helper format functions
 import ExpenseForm from "./ExpenseForm.jsx";
 
 // function ExpenseItem takes 6 props: (properties passed from parent component App.jsx)
@@ -29,8 +29,6 @@ export default function ExpenseItem({ expense, isEditing, onEdit, onCancel, onSa
       </li>
     );
   }
-
-  
 
   // if isEditing was false, render the expense item with its title, amount, created date, and edit/delete buttons
   return ( // <span> is an inline element that is used to group the text and buttons together
@@ -98,6 +96,7 @@ export default function ExpenseItem({ expense, isEditing, onEdit, onCancel, onSa
     </li>
   );
 }
+
 // add comment changes
 // line 28: expense.title inserts the title, followed by the $amount formatted the number to 2 decimal places
 // <small> is for rendering smaller text

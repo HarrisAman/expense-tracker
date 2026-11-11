@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { initialFormValues, toPayload, valuesAfterAdd } from "./ExpenseForm.js";
+import { initialFormValues, toPayload, valuesAfterAdd } from "../formUtils.js";
 
 describe("initialFormValues", () => {
   it("defaults for a new expense", () => {

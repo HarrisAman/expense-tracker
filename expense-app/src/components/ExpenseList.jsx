@@ -1,7 +1,7 @@
 // ExpenseList.jsx renders a list of expense items and handles the editing state for each item.
 
-import { groupByDay } from "../lib/ExpenseList.js"; // import helper format functions 
-import { formatDay, formatCurrency } from "../lib/sharedLogic";
+import { groupByDay } from "../utils/listUtils.js"; // import helper format functions 
+import { formatDay, formatCurrency } from "../utils/formatters.js";
 import ExpenseItem from "./ExpenseItem.jsx";
 
 // function ExpenseList takes 6 props: (properties passed from parent component App.jsx and child component ExpenseItem.jsx)
