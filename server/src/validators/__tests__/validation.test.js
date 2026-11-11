@@ -1,11 +1,19 @@
-import { describe, it, expect } from "vitest";
-import { parseDate, validateNewExpense, validateExpenseUpdate } from "../validation.js";
+// Unit test file for server/validation.js
+// Validators return { data } on success and { error } on failure
 
+// describe groups related tests under a label
+// it defines one test - sentence plus code that checks something
+// expect wraps a result so you can compare them
+import { describe, it, expect } from "vitest"; // imported functions for testing
+import { parseDate, validateNewExpense, validateExpenseUpdate } from "../validation.js"; // functions to test
+
+// describe(name, fn) function to test parseDate
 describe("parseDate", () => {
-  it("parses a valid date as midnight UTC", () => {
+  it("parses a valid date as midnight UTC", () => { // parses a valid date and expects this result
     expect(parseDate("2026-10-23").toISOString()).toBe("2026-10-23T00:00:00.000Z");
   });
 
+  // test cases to check if the value is right
   it.each(["hello", "10/23/2026", "2026-1-5", "2026-10-23T05:00", ""])(
     "rejects bad format %s",
     (value) => expect(parseDate(value)).toBeNull()
@@ -35,6 +43,12 @@ describe("validateNewExpense", () => {
     expect(data.date.toISOString()).toBe("2026-08-15T00:00:00.000Z");
   });
 
+  it("accepts a negative amount", () => {
+    const { data, error } = validateNewExpense({ title: "Refund", amount: -5 }, now);
+    expect(error).toBeUndefined();
+    expect(data.amount).toBe(-5);
+  });
+
   it("defaults the date to today when none is sent", () => {
     const { data } = validateNewExpense({ title: "x", amount: 1 }, now);
     expect(data.date.toISOString()).toBe("2026-11-04T00:00:00.000Z");
@@ -53,7 +67,7 @@ describe("validateNewExpense", () => {
     expect(validateNewExpense({ title, amount: 5 }, now).error).toMatch(/title/i);
   });
 
-  it.each([undefined, "4.5", 0, -5, NaN, Infinity, null])("rejects amount %s", (amount) => {
+  it.each([undefined, "4.5", 0, NaN, Infinity, null])("rejects amount %s", (amount) => {
     expect(validateNewExpense({ title: "x", amount }, now).error).toMatch(/amount/i);
   });
 
@@ -85,6 +99,10 @@ describe("validateExpenseUpdate", () => {
     expect(data.date.toISOString()).toBe("2026-09-01T00:00:00.000Z");
   });
 
+  it("accepts a negative amount", () => {
+    expect(validateExpenseUpdate({ amount: -5 }).data).toEqual({ amount: -5 });
+  });
+
   it("rejects an empty body", () => {
     expect(validateExpenseUpdate({}).error).toMatch(/nothing to update/i);
   });
@@ -97,7 +115,7 @@ describe("validateExpenseUpdate", () => {
     expect(validateExpenseUpdate({ title }).error).toMatch(/title/i)
   );
 
-  it.each(["abc", 0, -5])("rejects amount %s", (amount) =>
+  it.each(["abc", 0])("rejects amount %s", (amount) =>
     expect(validateExpenseUpdate({ amount }).error).toMatch(/amount/i)
   );
 

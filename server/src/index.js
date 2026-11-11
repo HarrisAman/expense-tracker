@@ -2,7 +2,7 @@
 
 import "dotenv/config"; // reads server/.env file and copies each KEY=value line to process.env (must be first import so variables exist before other code reads)
 import app from "./app.js"; // imports app from app.js file, which contains the express app and middleware/routes
-import { connectToMongoDB } from './db.js'; // imports from db.js file
+import { connectToMongoDB } from './config/db.js'; // imports from db.js file
 
 // PORT variable is set to the value of the PORT environment variable from .env file OR 5000 as default.
 const PORT = process.env.PORT || 5000;

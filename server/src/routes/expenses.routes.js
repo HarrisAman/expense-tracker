@@ -1,7 +1,9 @@
+// HTTP layer for expenses
+
 import { Router } from "express"; //imports Router class from express package, it holds routes (let me keep expense routes in this file as opposed to index.js file)
-import { db } from "./db.js"; // imports db variable from db.js file, need the database to save data
+import { db } from "../config/db.js"; // imports db variable from db.js file, need the database to save data
 import { ObjectId } from "mongodb"; // imports ObjectId class from mongodb package, used to convert string to ObjectId for MongoDB queries
-import { validateNewExpense, validateExpenseUpdate } from "./validation.js";
+import { validateNewExpense, validateExpenseUpdate } from "../validators/validation.js"; // functions that return data or error
 
 const router = Router(); // create router variable to hold the instance of Router class and attach handlers
 
@@ -13,9 +15,9 @@ router.post("/", async (req, res) => {
 
     // new Date() creates a new Date object representing the current date and time the line runs - into variable now
     const now = new Date();
-    //
-    const { data, error } = validateNewExpense(req.body, now);
-    //
+    // data comes back or errors
+    const { data, error } = validateNewExpense(req.body, now); 
+    // error return and show the error
     if (error) return res.status(400).json({ error });
     // create new object doc with relevant fields (allows me to build the doc myself)
     const doc = { ...data, createdAt: now, updatedAt: now, isActive: 1 };
@@ -76,7 +78,7 @@ router.put("/:id", async (req, res) => {
     }
 
     // create an empty object to hold the updates
-    const { data, error } = validateExpenseUpdate(req.body);
+    const { data, error } = validateExpenseUpdate(req.body); // what to change if valid fields
     if (error) return res.status(400).json({ error });
 
     // updateOne() method updates a single document in the expenses collection that matches the query { _id: new ObjectId(id) }

@@ -3,7 +3,7 @@
 
 import express from "express"; // imports express which allows me to receive requests and send responses to the client (browser)
 import cors from "cors"; // imports cors which lets my browser reads responses from the server (fetch would not work - browser security feature) 
-import expenseRoutes from "./routes.js"; // imports expenseRoutes from routes.js file, which contains the routes for the expenses API (router)
+import expenseRoutes from "./routes/expenses.routes.js"; // imports expenseRoutes from routes.js file, which contains the routes for the expenses API (router)
 
 // creating app the central object all middleware, routes, and the calls attach to it (const because can not be changed)
 const app = express(); // (express() is a function) creates an instance of express app, which is used to handle requests and responses. All stored in app variable

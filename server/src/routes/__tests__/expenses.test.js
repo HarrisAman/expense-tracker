@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import request from "supertest";
 import "dotenv/config";
-import app from "../app.js";
-import { db, connectToMongoDB, disconnectFromMongoDB } from "../db.js";
+import app from "../../app.js";
+import { db, connectToMongoDB, disconnectFromMongoDB } from "../../config/db.js";
 
 const MISSING_ID = "000000000000000000000000";
 let createdId;
@@ -57,6 +57,15 @@ describe("create", () => {
       .send({ title: "Bad", amount: 1, date: "hello" });
     expect(res.status).toBe(400);
   });
+
+  it("POST with a negative amount returns 201", async () => {
+    const res = await request(app)
+        .post("/api/expenses")
+        .send({ title: "Refund", amount: -5, date: "2026-08-15" });
+    expect(res.status).toBe(201);
+    expect(res.body.amount).toBe(-5);
+  });
+
 });
 
 describe("read", () => {
