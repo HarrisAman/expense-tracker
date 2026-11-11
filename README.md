@@ -1,6 +1,6 @@
 # Expense Tracker
 
-A full-stack expense tracker with full CRUD. Add expenses (including backdated and future ones), browse them on a month calendar with per-day totals, expand a row for transaction details, edit, and delete with an inline confirmation.
+A full-stack expense tracker with full CRUD. Add expenses (including backdated and future ones, and refunds as negative amounts), browse them on a month calendar with per-day totals, expand a row for transaction details, edit, and delete with an inline confirmation.
 
 - **Live app:** https://expense-tracker-nu-rose-61.vercel.app
 - **API health check:** https://expense-tracker-e3ax.onrender.com/api/health
@@ -27,6 +27,7 @@ A full-stack expense tracker with full CRUD. Add expenses (including backdated a
 - Create, read, update, and delete expenses through a REST API
 - Data stored in MongoDB Atlas
 - Each expense has a date, so past and future expenses can be recorded
+- Negative amounts are allowed (refunds, corrections); zero is rejected
 - Month calendar view: per-day totals, month total, previous/next month, click a day to see its expenses
 - Expenses grouped by day with daily totals, newest first
 - Inline transaction details (date, created, last updated, status)
@@ -59,36 +60,55 @@ Browser (React)  ->  fetch  ->  Express API  ->  MongoDB driver  ->  Atlas
 
 ```
 expense-tracker/
-  expense-app/                     React + Vite frontend
+  expense-app/                       React + Vite frontend
     src/
-      api.js                       fetch helpers for the REST API
-      App.jsx                      top-level state and layout
-      components/                  JSX only (render, UI state, event wiring)
+      main.jsx                       entry point
+      App.jsx                        layout and wiring only
+      index.css                      styles
+      components/                    JSX only (render, UI state, event wiring)
         ExpenseCalendar.jsx
         ExpenseForm.jsx
         ExpenseItem.jsx
         ExpenseList.jsx
-        *.test.jsx                 component behavior tests
-      lib/                         business logic (pure functions)
-        sharedLogic.js             formatCurrency, dayKey, formatDay
-        ExpenseCalendar.js         month grid, month totals, navigation
-        ExpenseForm.js             form defaults, payload conversion
-        ExpenseItem.js             date-time formatting, status label
-        ExpenseList.js             sorting, grouping, totals
-        *.test.js                  unit tests for each logic file
-  server/                          Express backend
-    index.js                       loads env, connects to MongoDB, starts the server
-    app.js                         builds the Express app (CORS, JSON, routes)
-    db.js                          MongoDB connection
-    routes.js                      HTTP layer: req/res, status codes, database calls
-    validation.js                  business rules: pure functions, no Express or database
-    vitest.config.js               points tests at a separate test database
-    tests/
-      validation.test.js           unit tests
-      expenses.test.js             integration tests (Supertest)
+        __tests__/                   component behavior tests
+      hooks/
+        useExpenses.js               data state, edit state and handlers
+      services/
+        expensesApi.js               fetch helpers for the REST API (network only)
+      utils/                         business logic (pure functions)
+        formatters.js                formatCurrency, dayKey, formatDay
+        calendarUtils.js             month grid, month totals, navigation
+        formUtils.js                 form defaults, payload conversion
+        itemUtils.js                 date-time formatting, status label
+        listUtils.js                 sorting, grouping, totals
+        __tests__/                   unit tests for each utils file
+  server/                            Express backend
+    vitest.config.js                 points tests at a separate test database
+    src/
+      index.js                       loads env, connects to MongoDB, starts the server
+      app.js                         builds the Express app (CORS, JSON, routes)
+      config/
+        db.js                        MongoDB connection
+      routes/
+        expenses.routes.js           HTTP layer: req/res, status codes, database calls
+      validators/
+        expense.validator.js         business rules: pure functions, no Express or database
+        __tests__/
+          expense.validator.test.js  unit tests
+      __tests__/
+        expenses.test.js             integration tests (Supertest)
 ```
 
-**Separation of concerns:** each component is JSX only, and its rules live in a matching file in `lib/`. Helpers used by more than one component live in `sharedLogic.js`. On the server, `routes.js` handles HTTP and `validation.js` holds the rules.
+**Separation of concerns:**
+
+| Layer | Responsibility | May not contain |
+|---|---|---|
+| `components/` | JSX, UI-only state, event wiring | Rules, formatting, `fetch` |
+| `hooks/` | Data state and handlers that call the service | JSX |
+| `services/` | Network calls | State, formatting |
+| `utils/` | Pure functions: formatting, sorting, grouping, calendar math | React, `fetch` |
+| `routes/` | HTTP: `req`, `res`, status codes, database calls | Field rules |
+| `validators/` | Input rules returning `{ data }` or `{ error }` | Express, `res`, database |
 
 ## Data model
 
@@ -96,7 +116,7 @@ expense-tracker/
 |---|---|---|
 | `_id` | ObjectId | Generated by MongoDB |
 | `title` | string | Required, non-empty, trimmed |
-| `amount` | number | Required, greater than 0 |
+| `amount` | number | Required, non-zero (negatives allowed for refunds) |
 | `date` | Date | Sent as `YYYY-MM-DD`; defaults to today; stored at midnight UTC |
 | `createdAt` | Date | Set by the server on creation |
 | `updatedAt` | Date | Set by the server on every update |
@@ -122,7 +142,7 @@ Base path: `/api/expenses`
 Example:
 
 ```bash
-curl -X POST <api-url>/api/expenses \
+curl -X POST https://expense-tracker-e3ax.onrender.com/api/expenses \
   -H "Content-Type: application/json" \
   -d '{"title":"Coffee","amount":4.5,"date":"2026-10-23"}'
 ```
@@ -132,7 +152,7 @@ curl -X POST <api-url>/api/expenses \
 Requirements: Node.js 20.19+ or 22.12+, and a free MongoDB Atlas cluster.
 
 ```bash
-git clone <repo-url>
+git clone <your-repo-url>
 cd expense-tracker
 ```
 
@@ -154,7 +174,7 @@ cp .env.example .env
 npm run dev
 ```
 
-Open the link Vite prints (usually http://localhost:5173). Restart Vite after changing `.env`.
+Open http://localhost:5173. Restart Vite after changing `.env`. On Windows PowerShell, use `Copy-Item .env.example .env` instead of `cp`.
 
 ## Environment variables
 
@@ -185,34 +205,38 @@ The integration tests refuse to run against any database whose name does not end
 
 ### Spec-to-test map
 
+Frontend paths are relative to `expense-app/src/`, backend paths to `server/src/`.
+
 | Spec | Covered by |
 |---|---|
-| Title, amount, and date validation; whitelisting; update rules | `server/tests/validation.test.js` |
-| CRUD routes and status codes (201, 400, 404) | `server/tests/expenses.test.js` |
-| Dollar formatting, day keys, day labels | `lib/sharedLogic.test.js` |
-| Sorting, grouping by day, daily totals | `lib/ExpenseList.test.js` |
-| Day grouping and empty state on screen | `components/ExpenseList.test.jsx` |
-| Details formatting and status label | `lib/ExpenseItem.test.js` |
-| Inline details and inline delete confirmation | `components/ExpenseItem.test.jsx` |
-| Form defaults, amount as a number, reset after add | `lib/ExpenseForm.test.js`, `components/ExpenseForm.test.jsx` |
-| Calendar grid, month totals, month navigation | `lib/ExpenseCalendar.test.js` |
+| Title, amount, and date validation; whitelisting; update rules | `validators/__tests__/expense.validator.test.js` |
+| CRUD routes and status codes (201, 400, 404) | `__tests__/expenses.test.js` |
+| Dollar formatting, day keys, day labels | `utils/__tests__/formatters.test.js` |
+| Sorting, grouping by day, daily totals | `utils/__tests__/listUtils.test.js` |
+| Day grouping and empty state on screen | `components/__tests__/ExpenseList.test.jsx` |
+| Details formatting and status label | `utils/__tests__/itemUtils.test.js` |
+| Inline details and inline delete confirmation | `components/__tests__/ExpenseItem.test.jsx` |
+| Form defaults, amount as a number, reset after add | `utils/__tests__/formUtils.test.js`, `components/__tests__/ExpenseForm.test.jsx` |
+| Calendar grid, month totals, month navigation | `utils/__tests__/calendarUtils.test.js` |
 
 ## Deployment
 
 - **Database:** MongoDB Atlas, with Network Access allowing Render's changing IPs (`0.0.0.0/0`, protected by the database user's password).
-- **API (Render):** root directory `server`, build `npm install`, start `npm start`. Environment: `MONGODB_URI`, `CLIENT_URL`.
+- **API (Render):** root directory `server`, build `npm install`, start `npm start` (runs `node src/index.js`). Environment: `MONGODB_URI`, `CLIENT_URL`.
 - **Frontend (Vercel):** root directory `expense-app`, build `npm run build`, output `dist`. Environment: `VITE_API_URL` (the Render URL, no trailing slash, set before the first build).
 
 Production deploys from `main`; pushes to other branches create preview builds only.
 
 ## Design decisions
 
-- **Server-side validation:** the API is public, so it never trusts the client. Rules live in `validation.js` and return `{ data }` or `{ error }`, so they can be unit tested without Express or a database.
+- **Server-side validation:** the API is public, so it never trusts the client. Rules live in `expense.validator.js` and return `{ data }` or `{ error }`, so they can be unit tested without Express or a database.
 - **Whitelisting:** documents and updates are built from named fields, so clients cannot inject `_id`, timestamps, or `isActive`.
 - **Dates as calendar days:** stored at midnight UTC and formatted in UTC, which avoids off-by-one days. The form sends the user's local date.
 - **Totals in cents:** daily and monthly sums add whole cents to avoid floating point drift.
+- **Negative amounts:** allowed and reduce day and month totals; zero is rejected.
 - **Updates wait for the server:** the screen never shows a change the database rejected.
 - **`app.js` split from `index.js`:** tests import the app without connecting to a database or opening a port.
+- **Logic separated from JSX:** components only render; formatting, sorting, grouping, and calendar math live in `utils/` and are unit tested.
 
 ## Known limitations
 
