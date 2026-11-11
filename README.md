@@ -1,12 +1,39 @@
 # Expense Tracker
 
-A full-stack expense tracker with full CRUD. Add expenses (including backdated ones), edit them, delete them, and see them grouped by day with daily totals.
+A full-stack expense tracker with full CRUD. Add expenses (including backdated and future ones, and refunds as negative amounts), browse them on a month calendar with per-day totals, expand a row for transaction details, edit, and delete with an inline confirmation.
 
-**Live app:** <https://expense-tracker-nu-rose-61.vercel.app>
-**API:** <https://expense-tracker-e3ax.onrender.com/api/health>
-**API:** <https://expense-tracker-e3ax.onrender.com/api/expenses>
+- **Live app:** https://expense-tracker-nu-rose-61.vercel.app
+- **API health check:** https://expense-tracker-e3ax.onrender.com/api/health
 
-> The API runs on Render's free tier and sleeps after inactivity. The first request can take 30 to 60 seconds to wake it.
+> The API runs on Render's free tier and sleeps when idle. The first request after a quiet period can take 30 to 60 seconds.
+
+## Table of contents
+
+1. [Features](#features)
+2. [Tech stack](#tech-stack)
+3. [Architecture](#architecture)
+4. [Project structure](#project-structure)
+5. [Data model](#data-model)
+6. [API reference](#api-reference)
+7. [Run it locally](#run-it-locally)
+8. [Environment variables](#environment-variables)
+9. [Testing](#testing)
+10. [Deployment](#deployment)
+11. [Design decisions](#design-decisions)
+12. [Known limitations](#known-limitations)
+
+## Features
+
+- Create, read, update, and delete expenses through a REST API
+- Data stored in MongoDB Atlas
+- Each expense has a date, so past and future expenses can be recorded
+- Negative amounts are allowed (refunds, corrections); zero is rejected
+- Month calendar view: per-day totals, month total, previous/next month, click a day to see its expenses
+- Expenses grouped by day with daily totals, newest first
+- Inline transaction details (date, created, last updated, status)
+- Inline delete confirmation (no popup)
+- Server-side validation with clear error messages
+- Loading and error states in the UI
 
 ## Tech stack
 
@@ -15,69 +42,107 @@ A full-stack expense tracker with full CRUD. Add expenses (including backdated o
 | Frontend | React 19, Vite |
 | Backend | Node.js, Express 5 |
 | Database | MongoDB Atlas (native `mongodb` driver) |
-| Testing | Vitest, Supertest |
-| Hosting | Render (API), <Vercel or Netlify> (frontend) |
+| Testing | Vitest, Supertest, React Testing Library |
+| Hosting | Vercel (frontend), Render (API), Atlas (database) |
 
-## Features
+## Architecture
 
-- Create, read, update, and delete expenses through a REST API
-- Data stored in MongoDB Atlas
-- Expenses have a date, so past expenses can be added and are grouped by day with daily totals
-- Server-side validation with clear error messages
-- Loading and error states in the UI
-- Confirmation before deleting
+```
+Browser (React)  ->  fetch  ->  Express API  ->  MongoDB driver  ->  Atlas
+   Vercel                          Render
+```
+
+- The frontend only talks to the API, never to the database.
+- Git stores code. Data lives only in Atlas.
+- CORS allows only the deployed frontend origin (`CLIENT_URL`).
 
 ## Project structure
 
 ```
 expense-tracker/
-  expense-app/          React + Vite frontend
+  expense-app/                       React + Vite frontend
     src/
-      api.js            fetch helpers for the REST API
-      App.jsx           state, handlers, page layout
-      components/
-        ExpenseForm.jsx   add and edit form
-        ExpenseList.jsx   groups expenses by day
-        ExpenseItem.jsx   one row (display or edit)
-  server/               Express backend
-    app.js              builds the Express app
-    index.js            connects to MongoDB and starts the server
-    db.js               MongoDB connection
-    routes.js           CRUD routes
-
+      main.jsx                       entry point
+      App.jsx                        layout and wiring only
+      index.css                      styles
+      components/                    JSX only (render, UI state, event wiring)
+        ExpenseCalendar.jsx
+        ExpenseForm.jsx
+        ExpenseItem.jsx
+        ExpenseList.jsx
+        __tests__/                   component behavior tests
+      hooks/
+        useExpenses.js               data state, edit state and handlers
+      services/
+        expensesApi.js               fetch helpers for the REST API (network only)
+      utils/                         business logic (pure functions)
+        formatters.js                formatCurrency, dayKey, formatDay
+        calendarUtils.js             month grid, month totals, navigation
+        formUtils.js                 form defaults, payload conversion
+        itemUtils.js                 date-time formatting, status label
+        listUtils.js                 sorting, grouping, totals
+        __tests__/                   unit tests for each utils file
+  server/                            Express backend
+    vitest.config.js                 points tests at a separate test database
+    src/
+      index.js                       loads env, connects to MongoDB, starts the server
+      app.js                         builds the Express app (CORS, JSON, routes)
+      config/
+        db.js                        MongoDB connection
+      routes/
+        expenses.routes.js           HTTP layer: req/res, status codes, database calls
+      validators/
+        expense.validator.js         business rules: pure functions, no Express or database
+        __tests__/
+          expense.validator.test.js  unit tests
+      __tests__/
+        expenses.test.js             integration tests (Supertest)
 ```
+
+**Separation of concerns:**
+
+| Layer | Responsibility | May not contain |
+|---|---|---|
+| `components/` | JSX, UI-only state, event wiring | Rules, formatting, `fetch` |
+| `hooks/` | Data state and handlers that call the service | JSX |
+| `services/` | Network calls | State, formatting |
+| `utils/` | Pure functions: formatting, sorting, grouping, calendar math | React, `fetch` |
+| `routes/` | HTTP: `req`, `res`, status codes, database calls | Field rules |
+| `validators/` | Input rules returning `{ data }` or `{ error }` | Express, `res`, database |
 
 ## Data model
 
 | Field | Type | Notes |
 |---|---|---|
 | `_id` | ObjectId | Generated by MongoDB |
-| `title` | string | Required, non-empty |
-| `amount` | number | Required, greater than 0 |
-| `date` | Date | `YYYY-MM-DD` in requests; defaults to today |
+| `title` | string | Required, non-empty, trimmed |
+| `amount` | number | Required, non-zero (negatives allowed for refunds) |
+| `date` | Date | Sent as `YYYY-MM-DD`; defaults to today; stored at midnight UTC |
 | `createdAt` | Date | Set by the server on creation |
 | `updatedAt` | Date | Set by the server on every update |
-| `isActive` | number | `1` active, `0` inactive; only active expenses are listed |
+| `isActive` | number | `1` active, `0` inactive. Only active expenses are listed |
 
-## API endpoints
+Deleting through the app permanently removes the document. Clients cannot set `createdAt`, `updatedAt`, or `_id`; the server builds each document from whitelisted fields only.
+
+## API reference
 
 Base path: `/api/expenses`
 
 | Method | Path | Description | Success | Errors |
 |---|---|---|---|---|
 | GET | `/api/health` | Health check | 200 | |
-| POST | `/api/expenses` | Create an expense (`title`, `amount`, optional `date`) | 201 | 400 |
+| POST | `/api/expenses` | Create (`title`, `amount`, optional `date`) | 201 | 400 |
 | GET | `/api/expenses` | List active expenses, newest date first | 200 | |
 | GET | `/api/expenses/:id` | Get one expense | 200 | 400, 404 |
 | PUT | `/api/expenses/:id` | Update `title`, `amount`, `date`, or `isActive` | 200 | 400, 404 |
 | DELETE | `/api/expenses/:id` | Delete an expense | 200 | 400, 404 |
 
-Status codes: `400` means invalid input or id, `404` means no expense has that id.
+`400` means invalid input or a malformed id. `404` means no expense has that id.
 
 Example:
 
 ```bash
-curl -X POST <api-url>/api/expenses \
+curl -X POST https://expense-tracker-e3ax.onrender.com/api/expenses \
   -H "Content-Type: application/json" \
   -d '{"title":"Coffee","amount":4.5,"date":"2026-10-23"}'
 ```
@@ -87,7 +152,7 @@ curl -X POST <api-url>/api/expenses \
 Requirements: Node.js 20.19+ or 22.12+, and a free MongoDB Atlas cluster.
 
 ```bash
-git clone <repo-url>
+git clone <your-repo-url>
 cd expense-tracker
 ```
 
@@ -96,18 +161,11 @@ cd expense-tracker
 ```bash
 cd server
 npm install
-cp .env.example .env     # then edit .env
+cp .env.example .env      # then edit .env
 npm run dev
 ```
 
-`server/.env`:
-
-```
-MONGODB_URI=your_atlas_connection_string
-PORT=5000
-```
-
-**Frontend** (in a second terminal)
+**Frontend** (second terminal)
 
 ```bash
 cd expense-app
@@ -116,37 +174,78 @@ cp .env.example .env
 npm run dev
 ```
 
-`expense-app/.env`:
+Open http://localhost:5173. Restart Vite after changing `.env`. On Windows PowerShell, use `Copy-Item .env.example .env` instead of `cp`.
 
-```
-VITE_API_URL=http://localhost:5000
-```
+## Environment variables
 
-Open the link Vite prints (usually http://localhost:5173). Restart Vite after changing `.env`.
+| Variable | Where | Purpose |
+|---|---|---|
+| `MONGODB_URI` | `server/.env`, Render | Atlas connection string (secret, never committed) |
+| `PORT` | Render sets it; defaults to 5000 locally | Port the API listens on |
+| `CLIENT_URL` | Render | Frontend origin allowed by CORS (no trailing slash). Defaults to `http://localhost:5173` |
+| `DB_NAME` | Set by `vitest.config.js` | Database name; tests use `expense-app-test` |
+| `VITE_API_URL` | `expense-app/.env`, Vercel | Backend base URL, baked in at build time |
 
-## Tests
+`.env` files are git-ignored. `.env.example` files list the required keys.
+
+## Testing
 
 ```bash
-cd server
-npm test
+cd server && npm test        # backend unit and integration tests
+cd expense-app && npm test   # frontend unit and component tests
 ```
 
-Tests use Vitest and Supertest against a separate `expense-app-test` database, so real data is never touched.
+| Layer | Tool | Needs a database? |
+|---|---|---|
+| Logic unit tests | Vitest | No |
+| Component tests | Vitest + React Testing Library (jsdom) | No |
+| Route integration tests | Vitest + Supertest | Yes, a separate `expense-app-test` database |
+
+The integration tests refuse to run against any database whose name does not end in `-test`, so real data is never touched.
+
+### Spec-to-test map
+
+Frontend paths are relative to `expense-app/src/`, backend paths to `server/src/`.
+
+| Spec | Covered by |
+|---|---|
+| Title, amount, and date validation; whitelisting; update rules | `validators/__tests__/expense.validator.test.js` |
+| CRUD routes and status codes (201, 400, 404) | `__tests__/expenses.test.js` |
+| Dollar formatting, day keys, day labels | `utils/__tests__/formatters.test.js` |
+| Sorting, grouping by day, daily totals | `utils/__tests__/listUtils.test.js` |
+| Day grouping and empty state on screen | `components/__tests__/ExpenseList.test.jsx` |
+| Details formatting and status label | `utils/__tests__/itemUtils.test.js` |
+| Inline details and inline delete confirmation | `components/__tests__/ExpenseItem.test.jsx` |
+| Form defaults, amount as a number, reset after add | `utils/__tests__/formUtils.test.js`, `components/__tests__/ExpenseForm.test.jsx` |
+| Calendar grid, month totals, month navigation | `utils/__tests__/calendarUtils.test.js` |
 
 ## Deployment
 
-- **Database:** MongoDB Atlas, with Network Access set to allow Render's IPs.
-- **Backend (Render):** root directory `server`, build command `npm install`, start command `npm start`. Environment variables: `MONGODB_URI`, `CLIENT_URL` (the frontend URL, used for CORS).
-- **Frontend (<Vercel or Netlify>):** root directory `expense-app`, build command `npm run build`, output directory `dist`. Environment variable: `VITE_API_URL` (the Render URL).
+- **Database:** MongoDB Atlas, with Network Access allowing Render's changing IPs (`0.0.0.0/0`, protected by the database user's password).
+- **API (Render):** root directory `server`, build `npm install`, start `npm start` (runs `node src/index.js`). Environment: `MONGODB_URI`, `CLIENT_URL`.
+- **Frontend (Vercel):** root directory `expense-app`, build `npm run build`, output `dist`. Environment: `VITE_API_URL` (the Render URL, no trailing slash, set before the first build).
 
-Both platforms redeploy automatically on every push to `main`.
+Production deploys from `main`; pushes to other branches create preview builds only.
+
+## Design decisions
+
+- **Server-side validation:** the API is public, so it never trusts the client. Rules live in `expense.validator.js` and return `{ data }` or `{ error }`, so they can be unit tested without Express or a database.
+- **Whitelisting:** documents and updates are built from named fields, so clients cannot inject `_id`, timestamps, or `isActive`.
+- **Dates as calendar days:** stored at midnight UTC and formatted in UTC, which avoids off-by-one days. The form sends the user's local date.
+- **Totals in cents:** daily and monthly sums add whole cents to avoid floating point drift.
+- **Negative amounts:** allowed and reduce day and month totals; zero is rejected.
+- **Updates wait for the server:** the screen never shows a change the database rejected.
+- **`app.js` split from `index.js`:** tests import the app without connecting to a database or opening a port.
+- **Logic separated from JSX:** components only render; formatting, sorting, grouping, and calendar math live in `utils/` and are unit tested.
 
 ## Known limitations
 
-- There are no user accounts, so all visitors share one list of expenses.
-- Dates are stored as calendar days at midnight UTC. The form sends the user's local date.
+- No user accounts, so all visitors share one list of expenses.
+- No pagination: `GET /api/expenses` returns every active expense.
+- No rate limiting or custom error middleware; unexpected errors return a generic 500.
+- Dates use UTC calendar days, while the form uses the user's local date.
 - Render's free tier sleeps when idle.
 
-## Development history
+## Future improvements
 
-The commit history shows the build in order: database module, Express server, CRUD routes, date field, React components, and tests.
+User accounts with private data, categories and filters, charts, pagination, and optimistic updates.

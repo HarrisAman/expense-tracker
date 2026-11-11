@@ -23,7 +23,7 @@ export const getExpenses = () => request(BASE); // no options object needed beca
 export const createExpense = (expense) =>
   request(BASE, { // request URL
     method: "POST", // matches router.post
-    headers: { "Content-Type": "application/json" }, // headers tells Express body is JSON
+    headers: { "Content-Type": "application/json" }, // headers tells Express body is JSON (txt format for repping data)
     body: JSON.stringify(expense), // JSON.stringify() converts object into JSON text (fetch only sends strings not objects)
   });
 
